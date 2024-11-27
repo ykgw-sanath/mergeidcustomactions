@@ -1,0 +1,63 @@
+[
+    {
+        "id": "f134b7212c9e3ba3",
+        "type": "tab",
+        "label": "Classic OPC AE Data",
+        "disabled": true,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "b7f9376aa6921584",
+        "type": "mqtt in",
+        "z": "f134b7212c9e3ba3",
+        "name": "",
+        "topic": "CLASSICOPCAE",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "8daf41aa.51aae",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 320,
+        "y": 340,
+        "wires": [
+            [
+                "7981983c072f3b16"
+            ]
+        ]
+    },
+    {
+        "id": "7981983c072f3b16",
+        "type": "opc file writer",
+        "z": "f134b7212c9e3ba3",
+        "maxfilesize": "20",
+        "timeout": "60",
+        "timeoutUnits": "minutes",
+        "opctype": "ae",
+        "buffer": true,
+        "delete": true,
+        "name": "OPC CLASSIC AE Data",
+        "x": 590,
+        "y": 340,
+        "wires": [
+            [
+                "a83920b53f96d6f0"
+            ]
+        ]
+    },
+    {
+        "id": "a83920b53f96d6f0",
+        "type": "link out",
+        "z": "f134b7212c9e3ba3",
+        "name": "OT File Out",
+        "mode": "link",
+        "links": [
+            "cf675741b8a2de95"
+        ],
+        "x": 815,
+        "y": 340,
+        "wires": []
+    }
+]
