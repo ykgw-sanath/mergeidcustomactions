@@ -1,0 +1,20 @@
+name: 'checkmergeid'
+description: 'Compares JSON files between source and destination branches to validate merge based on link in and link out ids.'
+author: 'Your Name'
+
+inputs:
+  source-branch:
+    description: 'The source branch for comparison (e.g., main)'
+    required: true
+    default: 'main'
+  destination-branch:
+    description: 'The destination branch for comparison (e.g., feature-branch)'
+    required: true
+    default: 'feature-branch'
+
+runs:
+  using: 'docker'
+  image: 'docker://<your-docker-image>:latest' # Specify your Docker image
+  args:
+    - ${{ inputs.source-branch }}
+    - ${{ inputs.destination-branch }}

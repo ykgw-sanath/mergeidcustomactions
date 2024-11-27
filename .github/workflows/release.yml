@@ -1,0 +1,52 @@
+name: Flow Templates Release File
+
+on:
+  release:
+    types: [created]  # Trigger when a release is created
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16  # Specify the Node.js version you need
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Run the script file
+      - name: Run the script file
+        id: run_script
+        run: |
+          node ./script/flowmerge.js
+        continue-on-error: false  # Exit if the script fails
+
+      # Step 5: Compare source and destination JSON IDs using custom action
+      - name: Compare JSON IDs using custom action
+        uses: action/checkmergeid@v1
+
+      # Step 6: Zip the folder (only if the script succeeded)
+      - name: Zip the flows folder
+        if: success()
+        run: zip -r ydx-edge-flow-templates.zip ./ydx-edge-flow-templates/
+
+      # Step 7: Upload the zipped folder (only if the script succeeded)
+      - name: Upload Flows
+        if: success()
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./ydx-edge-flow-templates.zip
+          asset_name: ydx-edge-flow-templates.zip
+          tag: ${{ github.event.release.tag_name }}
+          overwrite: true

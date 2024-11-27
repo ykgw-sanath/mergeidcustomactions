@@ -1,0 +1,17 @@
+[
+	{
+		"name": "flows_edgeadapter.json",
+		"dir": [
+			"windows"
+		],
+		"flows": [
+			"flow_classic_opc_da.json", "flow_classic_opc_ae.json", "flow_classichda.json",
+    "flow_opc_ua.json", "flow_opc_ua_ac.json", "flow_modbus.json", "flow_dnp3.json",
+    "flow_cis.json", "flow_mtsensor.json", "flow_ert3io.json",
+    "flow_osipiweb.json", "flow_ftp.json", "flow_graphql.json", "flow_odata.json",
+    "flow_database.json", "flow_data_buffer.json", "flow_writeback.json", "flow_file_upload.json",
+    "flow_edge_engineering.json", "flow_data_writeback.json", "flow_standard_orchestrator_interface.json",
+    "flows_subflows.json", "flows_mqtt.json"
+		]
+	}
+]
