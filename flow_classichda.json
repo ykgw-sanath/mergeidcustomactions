@@ -1,0 +1,44 @@
+[
+    {
+        "id": "927862fe85b7628f",
+        "type": "tab",
+        "label": "Classic OPC HDA Data",
+        "disabled": true,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "c52fe7aeda911161",
+        "type": "mqtt in",
+        "z": "927862fe85b7628f",
+        "name": "",
+        "topic": "HDA_FILEUPLOAD",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "bdf226ac322cb380",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 410,
+        "y": 260,
+        "wires": [
+            [
+                "61b40ccf6cb8b758"
+            ]
+        ]
+    },
+    {
+        "id": "61b40ccf6cb8b758",
+        "type": "link out",
+        "z": "927862fe85b7628f",
+        "name": "HDA Data out",
+        "mode": "link",
+        "links": [
+            "cf675741b8a2de95"
+        ],
+        "x": 575,
+        "y": 260,
+        "wires": []
+    }
+]

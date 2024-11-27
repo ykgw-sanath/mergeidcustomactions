@@ -1,0 +1,87 @@
+[
+    {
+        "id": "c237fab8.89eb88",
+        "type": "tab",
+        "label": "CI Server Data",
+        "disabled": true,
+        "info": ""
+    },
+    {
+        "id": "ac926cb1.c02c6",
+        "type": "function",
+        "z": "c237fab8.89eb88",
+        "name": "CI-S Data XFORM",
+        "func": "var separator = \"/\";\nvar resource = msg.topic.split(separator);\n\nvar metric_name;\nvar resource_name; \n\nif(resource.length >= 2) {\n    metric_name = resource.pop();\n    resource_name = resource.pop();\n} else {\n    metric_name = resource_name = resource.pop();\n}\n\nvar msg_json = JSON.parse(msg.payload);\n\nvar payload = {};\npayload['resource'] = resource_name;\npayload[metric_name] = msg_json.value ? parseFloat(msg_json.value).toFixed(3) : \"NaN\";\npayload['status'] = msg_json.status ? parseInt(msg_json.status) : \"NaN\";\nif (msg_json.timestamp) {\n    payload['timestamp'] = (new Date(msg_json.timestamp)).getTime() ? (new Date(msg_json.timestamp)).getTime() : null;\n}\n\nreturn { payload: payload };",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 160,
+        "wires": [
+            [
+                "f05fd1dc.f016b",
+                "1a00ab3695bb11e3"
+            ]
+        ]
+    },
+    {
+        "id": "850e6bb6.3d2fb8",
+        "type": "link out",
+        "z": "c237fab8.89eb88",
+        "name": "CI-S D2C",
+        "mode": "link",
+        "links": [
+            "fb958d597d3c49a5"
+        ],
+        "x": 755,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "f05fd1dc.f016b",
+        "type": "debug",
+        "z": "c237fab8.89eb88",
+        "name": "CI-S Flow Debug",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 670,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "d4c4e6de.da9ee8",
+        "type": "catch",
+        "z": "c237fab8.89eb88",
+        "name": "CI-S Flow Error",
+        "scope": null,
+        "uncaught": false,
+        "x": 460,
+        "y": 60,
+        "wires": [
+            [
+                "850e6bb6.3d2fb8"
+            ]
+        ]
+    },
+    {
+        "id": "1a00ab3695bb11e3",
+        "type": "subflow:88733edc6c42a0a8",
+        "z": "c237fab8.89eb88",
+        "name": "",
+        "x": 600,
+        "y": 160,
+        "wires": [
+            [
+                "850e6bb6.3d2fb8"
+            ]
+        ]
+    }
+]

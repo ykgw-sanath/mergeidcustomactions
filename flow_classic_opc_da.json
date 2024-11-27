@@ -1,0 +1,185 @@
+[
+    {
+        "id": "88733edc6c42a0a8",
+        "type": "subflow",
+        "name": "Merge Metrics",
+        "info": "",
+        "category": "",
+        "in": [
+            {
+                "x": 100,
+                "y": 240,
+                "wires": [
+                    {
+                        "id": "a3c86fb61619c077"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 840,
+                "y": 240,
+                "wires": [
+                    {
+                        "id": "da2f96c80ef4c3b9",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "Max Group Size",
+                "type": "num",
+                "value": "500"
+            },
+            {
+                "name": "Max Timeout  (In Seconds)",
+                "type": "num",
+                "value": "5"
+            },
+            {
+                "name": "Enable Alternate Route",
+                "type": "bool",
+                "value": "false"
+            }
+        ],
+        "meta": {},
+        "color": "#DDAA99"
+    },
+    {
+        "id": "79ea0db2fae2553f",
+        "type": "function",
+        "z": "88733edc6c42a0a8",
+        "name": "Merge Metrics",
+        "func": "const size = env.get(\"Max Group Size\");\nconst timeoutMs = Number(env.get(\"Max Timeout  (In Seconds)\"))*1000;\n\n// Context variables to store accumulated messages and timeout handle\nlet msgArray = context.get('msgArray') || [];\nlet timeoutHandle = context.get('timeoutHandle');\n\nfunction sendMergedMessages() {\n    clearTimeout(timeoutHandle);\n    node.send({ payload: msgArray });\n    msgArray = [];\n    context.set('msgArray', []);\n    context.set('timeoutHandle', null); \n}\n\n// Add the incoming message to the array\nmsgArray.push(msg.payload);\n\nif (msgArray.length >= size) {\n    sendMergedMessages(); \n} else {\n    // Set a timeout to send the messages if size is not met within the timeout\n    if (!timeoutHandle) {\n        timeoutHandle = setTimeout(sendMergedMessages, timeoutMs);\n        context.set('timeoutHandle', timeoutHandle);\n    }\n}\n\n// Store the updated message array in context\ncontext.set('msgArray', msgArray);",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 240,
+        "wires": [
+            [
+                "da2f96c80ef4c3b9"
+            ]
+        ]
+    },
+    {
+        "id": "da2f96c80ef4c3b9",
+        "type": "function",
+        "z": "88733edc6c42a0a8",
+        "name": "Group By Enrollment",
+        "func": "var groupBy = function (xs, key) {\n    return xs.reduce(function (rv, x) {\n        (rv[x[key]] = rv[x[key]] || []).push(x);\n        delete x[\"enrollment\"]\n        return rv;\n    }, {});\n};\n\ntry {\n    if (msg.payload.length == 0 || msg.payload.includes(\"Error\")) {\n        return;\n    }\n\n    let bulk = Boolean(env.get(\"Enable Alternate Route\"))\n    var groupedData = groupBy(msg.payload, 'enrollment');\n\n    for (const key in groupedData) {\n            msg.payload = {\n                def: \"Edge\",\n                typ: \"metric\",\n                payload: groupedData[key]\n            }\n            msg.edge = {\n                enrollment: key\n            }\n            if (bulk){\n                msg.payload.bl = true;\n            }\n            \n            node.send(msg);\n    }\n} catch (err) {\n    node.error(\"PROCESS METRIC failed: \" + err.toString());\n}\n\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a3c86fb61619c077",
+        "type": "function",
+        "z": "88733edc6c42a0a8",
+        "name": "Assign Enrollment",
+        "func": "if (Array.isArray(msg.payload)) {\n    let metrics = msg.payload\n    for (let j = 0; j < metrics.length; j++) {\n        assignEnrollment(metrics[j]);\n        msg = { \"payload\": metrics[j] };\n        node.send(msg);\n    }\n}\nelse {\n    assignEnrollment(msg.payload);\n    return msg;\n}\n\nfunction assignEnrollment(metric) {\n    let enrollment = metric.enrollment;\n    if (!enrollment) {\n        enrollment = global.get(\"enrollment_id\", \"file\");\n        metric.enrollment = enrollment;\n    }\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "path",
+                "module": "path"
+            }
+        ],
+        "x": 250,
+        "y": 240,
+        "wires": [
+            [
+                "79ea0db2fae2553f"
+            ]
+        ]
+    },
+    {
+        "id": "29d9eee1dfa2d559",
+        "type": "tab",
+        "label": "Classic OPC DA Data",
+        "disabled": true,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "42a486feab2abd4c",
+        "type": "mqtt in",
+        "z": "29d9eee1dfa2d559",
+        "name": "",
+        "topic": "CLASSICOPCDA",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "8daf41aa.51aae",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 320,
+        "y": 220,
+        "wires": [
+            [
+                "deae64ee1cfc714b"
+            ]
+        ]
+    },
+    {
+        "id": "deae64ee1cfc714b",
+        "type": "function",
+        "z": "29d9eee1dfa2d559",
+        "name": "Data Transformation",
+        "func": "let lastDotIndex;\nlet resourceName;\nlet metricName;\nlet metric;\n\ntry {\n    for (var i = 0; i < (msg.payload.Messages.length); i++) {\n        var otdata = msg.payload.Messages[i].Payload;\n        for (let [key, value] of Object.entries(otdata)) {\n            var metricValue = value;\n            var metricTimeStamp = Date.now()\n            if (value.Value != undefined) {\n                metricValue = value.Value\n            }\n            if (value.SourceTimestamp != undefined) {\n                metricTimeStamp = (new Date(value.SourceTimestamp)).getTime()\n            }\n\n            metric = {\n                payload: {\n                    // quality: otdata.q,\n                    \"timestamp\": metricTimeStamp\n                }\n            };\n\n            lastDotIndex = key.lastIndexOf('.');\n            if (lastDotIndex !== -1) {\n                resourceName = key.substring(0, lastDotIndex);\n                metricName = key.substring(lastDotIndex + 1);\n        \n                metric.payload[\"resource\"] = resourceName\n                metric.payload[metricName] = metricValue\n               \n            }else{\n                metric.payload[\"resource\"] = key\n                metric.payload[\"value\"] = metricValue\n            }\n            node.send(metric);\n        }\n    }\n} catch (err) {\n    node.error(msg.topic + \" payload transformation failed: \" + err.toString());\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 220,
+        "wires": [
+            [
+                "677f9ae02dfa7cce"
+            ]
+        ]
+    },
+    {
+        "id": "1a84efb52c684a7d",
+        "type": "link out",
+        "z": "29d9eee1dfa2d559",
+        "name": "OT Data Out",
+        "mode": "link",
+        "links": [
+            "fb958d597d3c49a5"
+        ],
+        "x": 895,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "677f9ae02dfa7cce",
+        "type": "subflow:88733edc6c42a0a8",
+        "z": "29d9eee1dfa2d559",
+        "name": "",
+        "x": 780,
+        "y": 220,
+        "wires": [
+            [
+                "1a84efb52c684a7d"
+            ]
+        ]
+    }
+]
